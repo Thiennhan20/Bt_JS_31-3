@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>File Explorer - Menu API</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f7f7f7;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .explorer {
+            width: 350px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            overflow-y: auto;
+            max-height: 90vh;
+        }
+
+        .explorer h3 {
+            font-size: 18px;
+            color: #444;
+            margin: 0 0 10px;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        li {
+            padding: 10px;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease, padding-left 0.3s ease;
+        }
+
+        li:hover {
+            background-color: #f0f0f0;
+            padding-left: 20px;
+        }
+
+        li.folder {
+            color: #4CAF50;
+            font-weight: bold;
+        }
+
+        li.file {
+            color: #2196F3;
+        }
+
+        li.folder::before, li.file::before {
+            content: '';
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            margin-right: 10px;
+            background-size: contain;
+            background-repeat: no-repeat;
+        }
+
+        li.folder::before {
+            content: '📁';
+        }
+
+        li.file::before {
+            content: '📄';
+        }
+
+        .submenu {
+            padding-left: 20px;
+            display: none;
+            margin-top: 5px;
+        }
+
+        li.open > .submenu {
+            display: block;
+        }
+
+        .open::after {
+            content: '▼';
+            font-size: 12px;
+            margin-left: 10px;
+        }
+
+        li.closed::after {
+            content: '►';
+            font-size: 12px;
+            margin-left: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="explorer">
+        <h3>MENU-API Explorer</h3>
+        <ul id="menu-list">
+            <!-- Dữ liệu menu sẽ được hiển thị ở đây -->
+        </ul>
+    </div>
+
+    <script>
+        // Lấy dữ liệu từ API và hiển thị menu
+        async function fetchMenu() {
+            try {
+                const response = await fetch('/api/menus');
+                const menus = await response.json();
+                renderMenu(menus, document.getElementById('menu-list'));
+            } catch (error) {
+                console.error("Error fetching menu data:", error);
+            }
+        }
+
+        // Hàm render menu thành cây
+        function renderMenu(menus, parentElement) {
+            menus.forEach(menu => {
+                const li = document.createElement('li');
+                li.classList.add(menu.children && menu.children.length > 0 ? 'folder' : 'file');
+                li.classList.add('closed'); // Mặc định là đóng
+
+                const span = document.createElement('span');
+                span.innerHTML = menu.text;
+                li.appendChild(span);
+
+                // Nếu menu có con, tạo submenu và gọi lại hàm renderMenu
+                if (menu.children && menu.children.length > 0) {
+                    const ul = document.createElement('ul');
+                    ul.classList.add('submenu');
+                    renderMenu(menu.children, ul);
+                    li.appendChild(ul);
+
+                    // Thêm sự kiện click để mở/đóng submenu
+                    li.addEventListener('click', (e) => {
+                        e.stopPropagation(); // Ngừng sự kiện lan tỏa
+                        li.classList.toggle('open');
+                        li.classList.toggle('closed');
+                    });
+                }
+
+                parentElement.appendChild(li);
+            });
+        }
+
+        // Gọi hàm fetchMenu khi trang được tải
+        window.onload = fetchMenu;
+    </script>
+</body>
+</html>
